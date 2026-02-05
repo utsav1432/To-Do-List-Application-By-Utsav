@@ -186,7 +186,9 @@ function App() {
 
       <main className="w-full max-w-2xl mx-auto shadow-md rounded-lg px-4 py-5 bg-white">
         <div className="mb-4">
-          <h3 className="text-2xl font-bold mb-2 text-gray-700 text-center">What do you need to do?</h3>
+          <h3 className="text-2xl font-bold mb-2 text-gray-700 text-center">
+            What do you need to do?
+          </h3>
           <form onSubmit={addTodo} className="flex gap-2 py-2">
             <input
               type="text"
@@ -211,28 +213,33 @@ function App() {
             Search Tasks
           </h3>
           <div className="flex gap-2">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={handleSearchKey}
-              placeholder="Search tasks..."
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 outline-none"
-              disabled={loading}
-            />
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={handleSearchKey}
+                placeholder="Search tasks..."
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 md:py-3 outline-none"
+                disabled={loading}
+              />
+              {search && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  type="button"
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
             <button
               onClick={searchTodo}
               disabled={loading}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
             >
               Search
-            </button>
-            <button
-              onClick={clearSearch}
-              disabled={loading}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700"
-            >
-              Clear
             </button>
           </div>
         </div>
@@ -255,7 +262,7 @@ function App() {
           </div>
         )}
 
-         <div>
+        <div>
           {!loading && todos.length === 0 ? (
             <div className="text-center p-8 bg-gray-50 rounded-lg">
               <p className="text-gray-500">
