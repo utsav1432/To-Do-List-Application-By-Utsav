@@ -289,39 +289,39 @@ function App() {
                       disabled={loading}
                     />
 
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       {isTodoEditable === todo._id ? (
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <input
                             type="text"
                             value={titleEdit}
                             onChange={(e) => setTitleEdit(e.target.value)}
-                            onKeyDown={(e) => handleEditKey(e, todo._id)}
-                            className="flex-1 border border-gray-300 rounded px-3 py-1 outline-none"
+                            onKeyDown={(e) => handleEdit(e, todo._id)}
+                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 sm:py-1 text-sm sm:text-base outline-none"
                             disabled={loading}
                             autoFocus
                           />
                           <button
                             onClick={() => saveEdit(todo._id)}
                             disabled={loading}
-                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                            className="flex-1 sm:flex-none px-3 py-2 sm:py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 active:bg-green-800 flex items-center justify-center gap-1 text-sm"
                           >
                             📁
                           </button>
                           <button
                             onClick={cancelEdit}
                             disabled={loading}
-                            className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
+                            className="flex-1 sm:flex-none px-3 py-2 sm:py-1 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 flex items-center justify-center gap-2"
                           >
                             ❌
                           </button>
                         </div>
                       ) : (
                         <span
-                          className={`text-lg ${
+                          className={`text-lg sm:text-xl md:text-base leading-relaxed overflow-hidden ${
                             todo.completed
-                              ? "line-through text-gray-500"
-                              : "text-gray-800"
+                              ? "line-through text-gray-500 italic"
+                              : "text-gray-800 font-medium"
                           }`}
                         >
                           {todo.title || "No title"}
