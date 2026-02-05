@@ -6,7 +6,7 @@ function App() {
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState("");
   const [loading, setLoading] = useState(false);
-  const [edit, setEdit] = useState(null);
+  const [isTodoEditable, setIsTodoEditable] = useState(null);
   const [titleEdit, setTitleEdit] = useState("");
   const [search, setSearch] = useState("");
   const [error, setError] = useState(null);
@@ -78,12 +78,12 @@ function App() {
   };
 
   const startEdit = (todo) => {
-    setEdit(todo._id); 
+    setIsTodoEditable(todo._id); 
     setTitleEdit(todo.title);
   };
 
   const saveEdit = async (id) => {
-    if (!titleEdit.trim()) {
+    if (!titleEdit) {
       setError("Task cannot be empty");
       return;
     }
@@ -95,12 +95,12 @@ function App() {
       await axios.put(`https://backend-todolist-1ayl.onrender.com/api/tasks/${id}`,
         {
           data: {
-            title: titleEdit.trim()
+            title: titleEdit
           }
         }
       );
 
-      setEdit(null);
+      setIsTodoEditable(null);
       setTitleEdit("");
       await fetchTodos();
     } catch (error) {
@@ -110,7 +110,7 @@ function App() {
   };
 
   const cancelEdit = () => {
-    setEdit(null);
+    setIsTodoEditable(null);
     setTitleEdit("");
   };
 
@@ -152,11 +152,11 @@ function App() {
   };
 
   const handleEdit = (e) => {
-     if (e.key === "Enter") {
+    if (e.key === "Enter") {
       e.preventDefault();
       saveEdit();
-     }
     }
+  }
 
   const clearSearch = () => {
     setSearch("");
@@ -211,7 +211,7 @@ function App() {
                   <input type="checkbox" checked={todo.completed || false} onChange={() => completeTodo(todo._id)} className="task-checkbox"/>
 
                   <div className="task-content">
-                    {edit === todo._id ? (
+                    {isTodoEditable === todo._id ? (
                       <div className="edit-mode">
                         <input type="text" value={titleEdit} onChange={(e) => setTitleEdit(e.target.value)} className="edit-input" onKeyDown={handleEdit}/>
                         <button onClick={() => saveEdit(todo._id)} className="save-button">Save</button>
@@ -221,7 +221,7 @@ function App() {
                       <span className={`task-title ${todo.completed ? "completed" : ""}`}>{todo.title || "No title"}</span>
                     )}
 
-                    {edit !== todo._id && (
+                    {isTodoEditable !== todo._id && (
                       <div className="task-actions">
                         <button onClick={() => startEdit(todo)} className="edit-button">Edit</button>
                         <button onClick={() => deleteTodo(todo._id)} className="delete-button">Delete</button>
