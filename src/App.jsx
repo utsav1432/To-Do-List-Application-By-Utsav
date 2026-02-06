@@ -1,363 +1,160 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
+import TodoItem from "./components/TodoItem";
+import TodoForm from "./components/TodoForm";
+import SearchTask from "./components/SearchTask";
 
 function App() {
-  const [todos, setTodos] = useState([]);
-  const [newTodo, setNewTodo] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [isTodoEditable, setIsTodoEditable] = useState(null);
-  const [titleEdit, setTitleEdit] = useState("");
+  const [tasks, setTasks] = useState([]);
+  const [newTask, setNewTask] = useState("");
   const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchTodos = async () => {
-    setLoading(true);
+  const Backend_API = "https://backend-todolist-1ayl.onrender.com/api/tasks";
+
+  const getTasks = async() => {
+    setIsLoading(true);
     setError(null);
 
     try {
-      const response = await axios.get(
-        `https://backend-todolist-1ayl.onrender.com/api/tasks`,
-      );
-      setTodos(response.data.data);
-    } catch (error) {
-      setError("Failed to get tasks. Please try again later!");
-    }
-    setLoading(false);
-  };
+      const response = await axios.get(Backend_API);
 
-  const addTodo = async (e) => {
+      const tasksData = response.data.data;
+
+      console.log(tasksData);
+      setTasks(tasksData);
+    }catch(error){
+      setError("Unable to get tasks. Please try again.");
+    }
+
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
+    getTasks();
+  }, []);
+
+  const addTask = async(e) => {
     e.preventDefault();
 
-    if (!newTodo) {
+    if(!newTask){
       setError("Task cannot be empty");
       return;
     }
 
-    setError(null);
-    setLoading(true);
-
-    try {
-      await axios.post(`https://backend-todolist-1ayl.onrender.com/api/tasks`, {
+    try{
+      await axios.post(Backend_API, {
         data: {
-          title: newTodo,
-          completed: false,
-        },
+          title: newTask,
+          completed: false
+        }
       });
-
-      setNewTodo("");
-      await fetchTodos();
-    } catch (error) {
-      setError("Failed to add task");
+      setNewTask("");
+      await getTasks();
+    }catch (error){
+      setError("Unable to add task. Please try again.");
     }
-    setLoading(false);
-  };
+  }
 
-  const completeTodo = async (id) => {
-    setError(null);
-    setLoading(true);
-
-    try {
-      await axios.put(
-        `https://backend-todolist-1ayl.onrender.com/api/tasks/${id}/toggle`,
-      );
-      await fetchTodos();
-    } catch (error) {
-      setError("Failed to update task status");
-    }
-    setLoading(false);
-  };
-
-  const deleteTodo = async (id) => {
-    setError(null);
-    setLoading(true);
-
-    try {
-      await axios.delete(
-        `https://backend-todolist-1ayl.onrender.com/api/tasks/${id}`,
-      );
-      await fetchTodos();
-    } catch (error) {
-      setError("Failed to delete task");
-    }
-    setLoading(false);
-  };
-
-  const startEdit = (todo) => {
-    setIsTodoEditable(todo._id);
-    setTitleEdit(todo.title);
-  };
-
-  const saveEdit = async (id) => {
-    if (!titleEdit) {
-      setError("Task cannot be empty");
-      return;
-    }
-
-    setError(null);
-    setLoading(true);
-
-    try {
-      await axios.put(
-        `https://backend-todolist-1ayl.onrender.com/api/tasks/${id}`,
-        {
+  const updateTask = async (id, updatedTask) => {
+    try{
+      await axios.put(`${Backend_API}/${id}`, {
           data: {
-            title: titleEdit,
-          },
-        },
-      );
-
-      setIsTodoEditable(null);
-      setTitleEdit("");
-      await fetchTodos();
-    } catch (error) {
-      setError("Failed to update task");
+            title: updatedTask.title
+          }
+        });
+      await getTasks();
+    }catch (error){
+      setError("Unable to update task. Please try again.");
     }
-    setLoading(false);
-  };
+  }
 
-  const cancelEdit = () => {
-    setIsTodoEditable(null);
-    setTitleEdit("");
-  };
-
-  const searchTodo = async () => {
-    if (!search.trim()) {
-      await fetchTodos();
-      return;
+  const deleteTask = async (id) => {
+    try{
+      await axios.delete(`${Backend_API}/${id}`);
+      await getTasks();
+    } catch(error){
+      setError("Unable to delete task. Please try again.")
     }
+  }
 
-    setLoading(true);
-    setError(null);
+  const completeTask = async (id) => {
+    try{
+      await axios.put(`${Backend_API}/${id}/toggle`);
+      await getTasks();
+    } catch(error){
+      setError("Unable to update complete task status. Please try again.")
+    }
+  }
 
-    try {
-      const response = await axios.get(
-        `https://backend-todolist-1ayl.onrender.com/api/tasks`,
+  const searchTasks = async() =>{
+    try{
+      const response = await axios.get(Backend_API);
+
+      const taskSearch = response.data.data.filter((task) =>
+      task.title?.toLowerCase().includes(search.toLowerCase())
       );
 
-      const todoSearch = response.data.data.filter((todo) =>
-        todo.title?.toLowerCase().includes(search.toLowerCase().trim()),
-      );
-
-      setTodos(todoSearch);
+      setTasks(taskSearch);
     } catch (error) {
       setError("Failed to search tasks");
     }
-    setLoading(false);
-  };
-
-  const handleAddKey = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addTodo(e);
-    }
-  };
-
-  const handleSearchKey = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      searchTodo();
-    }
-  };
-
-  const handleEdit = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      saveEdit();
-    }
-  };
-
-  const clearSearch = () => {
-    setSearch("");
-    fetchTodos();
-  };
-
-  useEffect(() => {
-    fetchTodos();
-  }, []);
+  }
 
   return (
     <div className="bg-[#172842] min-h-screen py-8">
-      <header className="w-full max-w-2xl mx-auto shadow-md rounded-lg px-4 py-3 text-white">
-        <h1 className="text-4xl font-extrabold text-center mb-8 mt-2">
-          Manage Your To-Do List
-        </h1>
-      </header>
-
-      <main className="w-full max-w-2xl mx-auto shadow-md rounded-lg px-4 py-5 bg-white">
-        <div className="mb-4">
-          <h3 className="text-2xl font-bold mb-2 text-gray-700 text-center">
-            What do you need to do?
-          </h3>
-          <form onSubmit={addTodo} className="flex gap-2 py-2">
-            <input
-              type="text"
-              value={newTodo}
-              onChange={(e) => setNewTodo(e.target.value)}
-              onKeyDown={handleAddKey}
-              placeholder="Enter a new task"
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 outline-none"
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              className="rounded-lg px-4 py-2 bg-green-600 text-white font-medium hover:bg-green-700"
-            >
-              Add
-            </button>
-          </form>
-        </div>
-
-        <div className="mb-6">
-          <h3 className="text-2xl font-bold mb-2 text-gray-700 text-center">
-            Search Tasks
-          </h3>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={handleSearchKey}
-                placeholder="Search tasks..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 md:py-3 outline-none"
-                disabled={loading}
-              />
-              {search && (
-                <button
-                  onClick={clearSearch}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  type="button"
-                  title="Clear search"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-            <button
-              onClick={searchTodo}
-              disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-            >
-              Search
-            </button>
-          </div>
+      <div className="w-full max-w-2xl mx-auto shadow-md rounded-lg px-4 py-3 text-white">
+        <div className="flex justify-center items-center mb-16">
+          <h1 className="text-5xl font-extrabold text-center">Manage Your To-Do List</h1>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex justify-between items-center">
-            <p className="text-red-700">{error}</p>
-            <button
-              onClick={() => setError(null)}
-              className="text-red-700 hover:text-red-900 font-bold text-lg"
-            >
-              ×
-            </button>
+          <div className="bg-red-500/90 text-white p-3 rounded-lg mb-4 flex justify-between items-center">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="text-white hover:text-gray-200">✕</button>
           </div>
         )}
 
-        {loading && (
+        <div className="mb-12">
+          <SearchTask search={search} setSearch={setSearch} searchTasks={searchTasks} />
+        </div>
+
+        <div className="mb-12">
+          <h3 className="text-2xl font-bold mb-4 text-gray-100">
+            What do you need to do?
+          </h3>
+          <TodoForm newTask={newTask} setNewTask={setNewTask}  addTask={addTask} />
+        </div>
+
+        {isLoading && (
           <div className="text-center p-4">
-            <p className="text-gray-600">Loading...</p>
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-white mb-4"></div>
+            <p className="text-gray-300">Loading...</p>
           </div>
         )}
 
         <div>
-          {!loading && todos.length === 0 ? (
+          {!isLoading && tasks.length === 0 ? (
             <div className="text-center p-8 bg-gray-50 rounded-lg">
               <p className="text-gray-500">
                 No tasks found. Add a new task above!
               </p>
             </div>
           ) : (
-            <ul className="space-y-3">
-              {todos.map((todo) => (
-                <li
-                  key={todo._id}
-                  className={`flex items-center justify-between p-4 border rounded-lg shadow-sm gap-3 ${
-                    todo.completed
-                      ? "bg-green-50 border-green-200"
-                      : "bg-purple-50 border-purple-200"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 flex-1">
-                    <input
-                      type="checkbox"
-                      checked={todo.completed}
-                      onChange={() => completeTodo(todo._id)}
-                      className="h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
-                      disabled={loading}
-                    />
-
-                    <div className="flex-1 min-w-0">
-                      {isTodoEditable === todo._id ? (
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <input
-                            type="text"
-                            value={titleEdit}
-                            onChange={(e) => setTitleEdit(e.target.value)}
-                            onKeyDown={(e) => handleEdit(e, todo._id)}
-                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 sm:py-1 text-sm sm:text-base outline-none"
-                            disabled={loading}
-                            autoFocus
-                          />
-                          <button
-                            onClick={() => saveEdit(todo._id)}
-                            disabled={loading}
-                            className="flex-1 sm:flex-none px-3 py-2 sm:py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 active:bg-green-800 flex items-center justify-center gap-1 text-sm"
-                          >
-                            📁
-                          </button>
-                          <button
-                            onClick={cancelEdit}
-                            disabled={loading}
-                            className="flex-1 sm:flex-none px-3 py-2 sm:py-1 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 flex items-center justify-center gap-2"
-                          >
-                            ❌
-                          </button>
-                        </div>
-                      ) : (
-                        <span
-                          className={`text-lg sm:text-xl md:text-base leading-relaxed overflow-hidden ${
-                            todo.completed
-                              ? "line-through text-gray-500 italic"
-                              : "text-gray-800 font-medium"
-                          }`}
-                        >
-                          {todo.title || "No title"}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {isTodoEditable !== todo._id && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => startEdit(todo)}
-                        disabled={loading}
-                        className="p-2 bg-blue-500 hover:bg-blue-600 rounded"
-                        title="Edit"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={() => deleteTodo(todo._id)}
-                        disabled={loading}
-                        className="p-2 bg-red-500 hover:bg-red-600 rounded"
-                        title="Delete"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  )}
-                </li>
+            <div className="flex flex-wrap gap-y-3">
+              {tasks.map((task) => (
+                <div key={task._id} className="w-full">
+                  <TodoItem task={task} updateTask={updateTask} deleteTask={deleteTask} completeTask={completeTask} />
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </div>
-      </main>
+      </div>
     </div>
-  );
+  )
 }
 
 export default App;
